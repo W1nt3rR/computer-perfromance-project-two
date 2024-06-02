@@ -38,9 +38,12 @@ This guide will help you set up MSYS2 to work with Visual Studio Code for C/C++ 
 
 1. Add the MSYS2 binary paths to your system PATH. Open your environment variables settings and add the following paths (assuming default installation directory):
 
-    ```sh
-    C:\\msys64\\usr\\bin
-    C:\\msys64\\mingw64\\bin
+    ```
+    C:\msys64\usr\bin
+    ```
+
+    ```
+    C:\msys64\mingw64\bin
     ```
 
 ### 5. Run with VS Code Debug
