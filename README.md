@@ -31,7 +31,7 @@ This guide will help you set up MSYS2 to work with Visual Studio Code for C/C++ 
 2. Install the development tools and other required packages. For example, to install the GNU Compiler Collection (GCC) and make:
 
     ```sh
-    pacman -S base-devel gcc
+    pacman -S base-devel gcc mingw-w64-x86_64-toolchain
     ```
 
 ### 4. Set Up Environment Variables.
