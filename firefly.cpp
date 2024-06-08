@@ -1,134 +1,162 @@
-#define _USE_MATH_DEFINES
 #include <iostream>
-#include <vector>
 #include <cmath>
-#include <omp.h>
-#include <chrono>
+#include <vector>
 #include <algorithm>
-#include <random>
-#include <math.h>
-#include "benchmark_functions.cpp"
+#include <ctime>
+#include <cstdlib>
+#include <limits>
+#include <omp.h>
+#include <iomanip>
+#include "functions.cpp"
+
+#ifndef M_PI
+#define M_PI 3.14159265358979323846
+#endif
 
 using namespace std;
-using namespace std::chrono;
 
-class FireflyAlgorithm {
-public:
-    FireflyAlgorithm(int numFireflies, int dimensions, int maxIterations, double alpha, double beta0, double gamma, double lowerBound, double upperBound, int numThreads, double (*benchmarkFunction)(const vector<double>&))
-        : numFireflies(numFireflies), dimensions(dimensions), maxIterations(maxIterations), alpha(alpha), beta0(beta0), gamma(gamma), lowerBound(lowerBound), upperBound(upperBound), numThreads(numThreads), benchmarkFunction(benchmarkFunction) {
-        rng.seed(random_device{}());
-        randDouble = uniform_real_distribution<double>(0.0, 1.0);
-        randPosition = uniform_real_distribution<double>(lowerBound, upperBound);
+// Firefly Algorithm parameters
+const int population_size = 20;
+const int max_generations = 100;
+const double alpha = 0.5;  // Randomness strength
+const double beta0 = 1.0;  // Attractiveness constant
+const double gammaCoeff = 1.0;  // Absorption coefficient
+
+// Function to generate random double between min and max
+double randomDouble(double min, double max)
+{
+    return min + static_cast<double>(rand()) / (static_cast<double>(RAND_MAX / (max - min)));
+}
+
+// Function to benchmark
+double benchmark(const vector<double> &x, int function_id)
+{
+    switch (function_id)
+    {
+    case 1:
+        return sumSquares(x);
+    case 2:
+        return step2(x);
+    case 3:
+        return quartic(x);
+    case 4:
+        return powell(x);
+    case 5:
+        return rosenbrock(x);
+    case 6:
+        return dixonPrice(x);
+    case 7:
+        return schwefel1_2(x);
+    case 8:
+        return schwefel2_20(x);
+    case 9:
+        return schwefel2_21(x);
+    case 10:
+        return rastrigin(x);
+    case 11:
+        return griewank(x);
+    case 12:
+        return csendes(x);
+    case 13:
+        return colville(x);
+    case 14:
+        return easom(x);
+    case 15:
+        return michalewicz(x);
+    case 16:
+        return shekel(x);
+    case 17:
+        return schwefel2_4(x);
+    case 18:
+        return schwefel(x);
+    case 19:
+        return schaffer(x);
+    case 20:
+        return alpine(x);
+    case 21:
+        return ackley(x);
+    case 22:
+        return sphere(x);
+    case 23:
+        return schwefel2_22(x);
+    default:
+        return numeric_limits<double>::infinity();
+    }
+}
+
+// Firefly Algorithm
+double fireflyAlgorithm(int dim, double min_range, double max_range, int function_id, int numThreads) {
+
+    // Postavljanje broja niti za OpenMP
+    omp_set_num_threads(numThreads);
+
+    srand(static_cast<unsigned>(time(0)));
+    
+    vector<vector<double>> population(population_size, vector<double>(dim));
+    vector<double> fitness(population_size);
+
+    // Initialize population
+#pragma omp parallel for
+    for (int i = 0; i < population_size; ++i) {
+        for (int j = 0; j < dim; ++j) {
+            population[i][j] = randomDouble(min_range, max_range);
+        }
+        fitness[i] = benchmark(population[i], function_id);
     }
 
-    double run() {
-        vector<vector<double>> fireflies(numFireflies, vector<double>(dimensions));
-        vector<double> intensities(numFireflies);
-
-        for (int i = 0; i < numFireflies; ++i) {
-            for (int j = 0; j < dimensions; ++j) {
-                fireflies[i][j] = randPosition(rng);
-            }
-            intensities[i] = benchmarkFunction(fireflies[i]);
-        }
-
-        for (int t = 0; t < maxIterations; ++t) {
-            #pragma omp parallel for num_threads(numThreads) schedule(dynamic)
-            for (int i = 0; i < numFireflies; ++i) {
-                for (int j = 0; j < numFireflies; ++j) {
-                    if (intensities[j] < intensities[i]) {
-                        update_firefly(fireflies[i], fireflies[j], intensities[i]);
+    for (int gen = 0; gen < max_generations; ++gen) {
+#pragma omp parallel for schedule(dynamic)
+        for (int i = 0; i < population_size; ++i) {
+            for (int j = 0; j < population_size; ++j) {
+                if (fitness[i] > fitness[j]) {
+                    double r = 0.0;
+                    for (int k = 0; k < dim; ++k) {
+                        r += pow(population[i][k] - population[j][k], 2);
                     }
+                    r = sqrt(r);
+
+                    double beta = beta0 * exp(-gammaCoeff * r * r);
+                    for (int k = 0; k < dim; ++k) {
+                        population[i][k] += beta * (population[j][k] - population[i][k]) + alpha * (randomDouble(0, 1) - 0.5);
+                        population[i][k] = min(max(population[i][k], min_range), max_range);
+                    }
+                    fitness[i] = benchmark(population[i], function_id);
                 }
             }
         }
-
-        auto best_it = min_element(intensities.begin(), intensities.end());
-        int best_index = distance(intensities.begin(), best_it);
-        return intensities[best_index];
     }
 
-private:
-    int numFireflies;
-    int dimensions;
-    int maxIterations;
-    double alpha;
-    double beta0;
-    double gamma;
-    double lowerBound;
-    double upperBound;
-    int numThreads;
-    double (*benchmarkFunction)(const vector<double>&);
+    auto min_element_it = min_element(fitness.begin(), fitness.end());
+    int best_index = distance(fitness.begin(), min_element_it);
 
-    mt19937 rng;
-    uniform_real_distribution<double> randDouble;
-    uniform_real_distribution<double> randPosition;
+    return fitness[best_index];
+}
 
-    void update_firefly(vector<double>& firefly_i, const vector<double>& firefly_j, double& intensity_i) {
-        for (int d = 0; d < dimensions; ++d) {
-            double r = abs(firefly_i[d] - firefly_j[d]);
-            double beta = beta0 * exp(-gamma * r * r);
-            firefly_i[d] = firefly_i[d] + beta * (firefly_j[d] - firefly_i[d]) + alpha * (randDouble(rng) - 0.5);
-            firefly_i[d] = min(max(firefly_i[d], lowerBound), upperBound);
+int main()
+{
+    // Define the functions parameters
+    vector<int> dims = {256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 60, 4, 2, 5, 4, 256, 256, 256, 30, 30, 30, 30};
+    vector<double> min_ranges = {-10, -100, -1.28, -4, -30, -10, -100, -100, -100, -5.12, -600, -1, -10, -100, 0, 0, 0, -500, -100, -10, -32, -5.12, -10};
+    vector<double> max_ranges = {10, 100, 1.28, 5, 30, 10, 100, 100, 100, 5.12, 600, 1, 10, 100, M_PI, 10, 10, 500, 100, 10, 32, 5.12, 10};
+
+    for (int numberOfThreads = 1; numberOfThreads <= 16; numberOfThreads *= 2)
+    {
+        cout << "Number of threads: " << numberOfThreads << endl;
+
+        for (int i = 1; i <= 23; ++i)
+        {
+            int numberOfRepeats = 10;
+            double result = 0.0;
+
+            for (int j = 0; j < numberOfRepeats; ++j)
+            {
+                result += fireflyAlgorithm(dims[i - 1], min_ranges[i - 1], max_ranges[i - 1], i, numberOfThreads);
+            }
+
+            cout << "Function " << i << " : " << std::fixed << std::setprecision(2) << result / numberOfRepeats << endl;
         }
-        intensity_i = benchmarkFunction(firefly_i);
-    }
-};
 
-int main() {
-    // Parameters for Firefly Algorithm
-    int numFireflies = 50;
-    int dimensions = 30;
-    int maxIterations = 30;
-    double alpha = 0.2;
-    double beta0 = 1.0;
-    double gamma = 1.0;
-    double lowerBound = -100.0;
-    double upperBound = 100.0;
-    int numThreads = 64;
-
-    // List of benchmark functions
-    vector<pair<string, double (*)(const vector<double>&)>> functions = {
-        {"Sum Squares Function", sumSquaresFunction},
-        {"Step 2 Function", step2Function},
-        {"Quartic Function", quarticFunction},
-        {"Powell Function", powellFunction},
-        {"Rosenbrock Function", rosenbrockFunction},
-        {"Dixon & Price Function", dixonPriceFunction},
-        {"Schwefel 1.2 Function", schwefel12Function},
-        {"Schwefel 2.20 Function", schwefel220Function},
-        {"Schwefel 2.21 Function", schwefel221Function},
-        {"Rastrigin Function", rastriginFunction},
-        {"Griewank Function", griewankFunction},
-        {"Csendes Function", csendesFunction},
-        {"Colville Function", colvilleFunction},
-        {"Easom Function", easomFunction},
-        {"Michalewicz Function", michalewiczFunction},
-        {"Shekel Function", shekelFunction},
-        {"Schwefel Function", schwefelFunction},
-        {"Schwefel 2.4 Function", schwefel24Function},
-        {"Schaffer Function", schafferFunction},
-    };
-
-    // Run the Firefly Algorithm on each function and print the results
-    for (const auto& function : functions) {
-        auto start = high_resolution_clock::now();
-
-        FireflyAlgorithm fa(numFireflies, dimensions, maxIterations, alpha, beta0, gamma, lowerBound, upperBound, numThreads, function.second);
-
-        // Perform 30 runs and calculate the average best solution
-        double totalBest = 0.0;
-        for (int run = 0; run < 30; ++run) {
-            totalBest += fa.run();
-        }
-        double averageBest = totalBest / 30.0;
-
-        auto end = high_resolution_clock::now();
-        auto duration = duration_cast<milliseconds>(end - start).count();
-
-        cout << "Function: " << function.first << endl;
-        cout << "Average Best Solution: " << averageBest << endl;
-        cout << "Execution Time: " << duration << " ms" << endl << endl;
+        cout << endl;
     }
 
     return 0;
