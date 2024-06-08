@@ -89,7 +89,7 @@ int main() {
 
     // List of benchmark functions
     vector<pair<string, double (*)(const vector<double>&)>> functions = {
-        {"Gay Sum Squares Function", sumSquaresFunction},
+        {"Sum Squares Function", sumSquaresFunction},
         {"Step 2 Function", step2Function},
         {"Quartic Function", quarticFunction},
         {"Powell Function", powellFunction},
