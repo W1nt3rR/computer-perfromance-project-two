@@ -25,7 +25,7 @@ const double gammaCoeff = 1.0; // Absorption coefficient
 
 // Other Parameters
 const int numberOfRuns = 30;
-const int numberOfThreads = 32;
+const int numberOfThreads = omp_get_max_threads();
 
 // Function to generate random double between min and max
 double randomDouble(double min, double max)
