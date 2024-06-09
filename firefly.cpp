@@ -2,8 +2,7 @@
 #include <cmath>
 #include <vector>
 #include <algorithm>
-#include <ctime>
-#include <cstdlib>
+#include <random>
 #include <limits>
 #include <omp.h>
 #include <iomanip>
@@ -32,10 +31,10 @@ const char separator = ' ';
 const int nameWidth = 18;
 const int numWidth = 16;
 
-// Function to generate random double between min and max
-double randomDouble(double min, double max)
+// Function to generate random double between min and max using a thread-safe generator
+double randomDouble(double min, double max, mt19937 &rng, uniform_real_distribution<> &dist)
 {
-    return min + static_cast<double>(rand()) / (static_cast<double>(RAND_MAX / (max - min)));
+    return min + dist(rng) * (max - min);
 }
 
 // Firefly Algorithm
@@ -43,7 +42,8 @@ double fireflyAlgorithm(int dim, double min_range, double max_range, function<do
 {
     omp_set_num_threads(numThreads);
 
-    srand(static_cast<unsigned>(time(0)));
+    mt19937 rng(random_device{}());
+    uniform_real_distribution<> dist(0.0, 1.0);
 
     vector<vector<double>> population(population_size, vector<double>(dim));
     vector<double> fitness(population_size);
@@ -54,7 +54,7 @@ double fireflyAlgorithm(int dim, double min_range, double max_range, function<do
     {
         for (int j = 0; j < dim; ++j)
         {
-            population[i][j] = randomDouble(min_range, max_range);
+            population[i][j] = randomDouble(min_range, max_range, rng, dist);
         }
         fitness[i] = benchmark(population[i]);
     }
@@ -78,7 +78,7 @@ double fireflyAlgorithm(int dim, double min_range, double max_range, function<do
                     double beta = beta0 * exp(-gammaCoeff * r * r);
                     for (int k = 0; k < dim; ++k)
                     {
-                        population[i][k] += beta * (population[j][k] - population[i][k]) + alpha * (randomDouble(0, 1) - 0.5);
+                        population[i][k] += beta * (population[j][k] - population[i][k]) + alpha * (randomDouble(0, 1, rng, dist) - 0.5);
                         population[i][k] = min(max(population[i][k], min_range), max_range);
                     }
                     fitness[i] = benchmark(population[i]);
@@ -97,7 +97,7 @@ template <typename T>
 void printElement(T t, const int &width)
 {
     cout << left << setw(width) << setfill(separator) << t;
-    std::cout.flush();
+    cout.flush();
 }
 
 struct FunctionBenchmark
@@ -147,7 +147,8 @@ int main()
     cout << endl;
 
     // Run the Firefly Algorithm for each function
-    for (const auto &funcBenchmark : functionBenchmarks) {
+    for (const auto &funcBenchmark : functionBenchmarks)
+    {
         string function_name = funcBenchmark.name;
         auto benchmark = funcBenchmark.benchmark;
         int dim = funcBenchmark.dim;
@@ -177,14 +178,14 @@ int main()
         int best_index = distance(results.begin(), min_element_it);
 
         int numThreads = static_cast<int>(pow(2, best_index));
-        std::string threadText = numThreads == 1 ? " Thread" : " Threads";
-        printElement(std::to_string(numThreads) + threadText, numWidth);
+        string threadText = numThreads == 1 ? " Thread" : " Threads";
+        printElement(to_string(numThreads) + threadText, numWidth);
 
         cout << endl;
     }
 
-    cout << endl
-         << endl;
+    cout << endl;
+    cout << endl;
 
     return 0;
 }
