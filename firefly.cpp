@@ -42,16 +42,16 @@ double fireflyAlgorithm(int dim, double min_range, double max_range, function<do
 {
     omp_set_num_threads(numThreads);
 
-    mt19937 rng(random_device{}());
-    uniform_real_distribution<> dist(0.0, 1.0);
-
     vector<vector<double>> population(population_size, vector<double>(dim));
     vector<double> fitness(population_size);
 
-    // Initialize population
-#pragma omp parallel for
+    // Initialize population and fitness
+    #pragma omp parallel for schedule(dynamic)
     for (int i = 0; i < population_size; ++i)
     {
+        mt19937 rng(random_device{}() + omp_get_thread_num());
+        uniform_real_distribution<> dist(0.0, 1.0);
+
         for (int j = 0; j < dim; ++j)
         {
             population[i][j] = randomDouble(min_range, max_range, rng, dist);
@@ -61,9 +61,12 @@ double fireflyAlgorithm(int dim, double min_range, double max_range, function<do
 
     for (int gen = 0; gen < max_generations; ++gen)
     {
-#pragma omp parallel for schedule(dynamic)
+        #pragma omp parallel for schedule(dynamic)
         for (int i = 0; i < population_size; ++i)
         {
+            mt19937 rng(random_device{}() + omp_get_thread_num());
+            uniform_real_distribution<> dist(0.0, 1.0);
+
             for (int j = 0; j < population_size; ++j)
             {
                 if (fitness[i] > fitness[j])
