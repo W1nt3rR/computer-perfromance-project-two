@@ -17,11 +17,15 @@
 using namespace std;
 
 // Firefly Algorithm parameters
-const int population_size = 20;
-const int max_generations = 100;
+const int population_size = 50;
+const int max_generations = 500;
 const double alpha = 0.5;      // Randomness strength
 const double beta0 = 1.0;      // Attractiveness constant
 const double gammaCoeff = 1.0; // Absorption coefficient
+
+// Other Parameters
+const int numberOfRuns = 30;
+const int numberOfThreads = 32;
 
 // Function to generate random double between min and max
 double randomDouble(double min, double max)
@@ -32,8 +36,6 @@ double randomDouble(double min, double max)
 // Firefly Algorithm
 double fireflyAlgorithm(int dim, double min_range, double max_range, function<double(const vector<double> &)> benchmark, int numThreads)
 {
-
-    // Postavljanje broja niti za OpenMP
     omp_set_num_threads(numThreads);
 
     srand(static_cast<unsigned>(time(0)));
@@ -94,12 +96,13 @@ template <typename T>
 void printElement(T t, const int &width)
 {
     cout << left << setw(width) << setfill(separator) << t;
+    std::cout.flush();
 }
 
 int main()
 {
     // Define the functions parameters
-    vector<int> dims = {256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 60, 4, 2, 5, 4, 256, 256, 256, 30, 30, 30, 30};
+    vector<int> dims = {60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 4, 2, 5, 4, 60, 60, 60, 30, 30, 30, 30};
     vector<double> min_ranges = {-10, -100, -1.28, -4, -30, -10, -100, -100, -100, -5.12, -600, -1, -10, -100, 0, 0, 0, -500, -100, -10, -32, -5.12, -10};
     vector<double> max_ranges = {10, 100, 1.28, 5, 30, 10, 100, 100, 100, 5.12, 600, 1, 10, 100, M_PI, 10, 10, 500, 100, 10, 32, 5.12, 10};
 
@@ -107,48 +110,44 @@ int main()
     vector<pair<string, function<double(const vector<double> &)>>> functionBenchmarks = {
         {"sumSquares", sumSquares}, {"step2", step2}, {"quartic", quartic}, {"powell", powell}, {"rosenbrock", rosenbrock}, {"dixonPrice", dixonPrice}, {"schwefel1_2", schwefel1_2}, {"schwefel2_20", schwefel2_20}, {"schwefel2_21", schwefel2_21}, {"rastrigin", rastrigin}, {"griewank", griewank}, {"csendes", csendes}, {"colville", colville}, {"easom", easom}, {"michalewicz", michalewicz}, {"shekel", shekel}, {"schwefel2_4", schwefel2_4}, {"schwefel", schwefel}, {"schaffer", schaffer}, {"alpine", alpine}, {"ackley", ackley}, {"sphere", sphere}, {"schwefel2_22", schwefel2_22}};
 
-    // table header
+    // Table header
     printElement("Function", nameWidth);
-    printElement("1 Thread", numWidth);
-    printElement("2 Threads", numWidth);
-    printElement("4 Threads", numWidth);
-    printElement("8 Threads", numWidth);
-    printElement("16 Threads", numWidth);
+    for (int threads = 1; threads <= numberOfThreads; threads *= 2)
+    {
+        printElement(to_string(threads) + (threads == 1 ? " Thread" : " Threads"), numWidth);
+    }
     printElement("Best Performance", numWidth);
     cout << endl;
     cout << endl;
 
+    // Run the Firefly Algorithm for each function
     for (int i = 0; i < functionBenchmarks.size(); ++i)
     {
-
         const auto &funcPair = functionBenchmarks[i];
         string function_name = funcPair.first;
         auto benchmark = funcPair.second;
 
         auto results = vector<double>();
 
-        for (int numberOfThreads = 1; numberOfThreads <= 16; numberOfThreads *= 2)
+        printElement(function_name, nameWidth);
+
+        for (int threads = 1; threads <= numberOfThreads; threads *= 2)
         {
-            int numberOfRepeats = 10;
             double result = 0.0;
 
-            for (int j = 0; j < numberOfRepeats; ++j)
+            for (int j = 0; j < numberOfRuns; ++j)
             {
-                result += fireflyAlgorithm(dims[i], min_ranges[i], max_ranges[i], benchmark, numberOfThreads);
+                result += fireflyAlgorithm(dims[i], min_ranges[i], max_ranges[i], benchmark, threads);
             }
 
-            results.push_back(result / numberOfRepeats);
+            printElement(result / numberOfRuns, numWidth);
+
+            results.push_back(result / numberOfRuns);
         }
 
         auto min_element_it = min_element(results.begin(), results.end());
 
         int best_index = distance(results.begin(), min_element_it);
-
-        printElement(function_name, nameWidth);
-        for (double result : results)
-        {
-            printElement(result, numWidth);
-        }
 
         int numThreads = static_cast<int>(pow(2, best_index));
         std::string threadText = numThreads == 1 ? " Thread" : " Threads";
