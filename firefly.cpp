@@ -27,6 +27,11 @@ const double gammaCoeff = 1.0; // Absorption coefficient
 const int numberOfRuns = 30;
 const int numberOfThreads = omp_get_max_threads();
 
+// Table formatting
+const char separator = ' ';
+const int nameWidth = 18;
+const int numWidth = 16;
+
 // Function to generate random double between min and max
 double randomDouble(double min, double max)
 {
@@ -88,10 +93,6 @@ double fireflyAlgorithm(int dim, double min_range, double max_range, function<do
     return fitness[best_index];
 }
 
-const char separator = ' ';
-const int nameWidth = 18;
-const int numWidth = 16;
-
 template <typename T>
 void printElement(T t, const int &width)
 {
@@ -99,16 +100,41 @@ void printElement(T t, const int &width)
     std::cout.flush();
 }
 
+struct FunctionBenchmark
+{
+    int dim;
+    double min_range;
+    double max_range;
+    string name;
+    function<double(const vector<double> &)> benchmark;
+};
+
 int main()
 {
-    // Define the functions parameters
-    vector<int> dims = {60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 4, 2, 5, 4, 60, 60, 60, 30, 30, 30, 30};
-    vector<double> min_ranges = {-10, -100, -1.28, -4, -30, -10, -100, -100, -100, -5.12, -600, -1, -10, -100, 0, 0, 0, -500, -100, -10, -32, -5.12, -10};
-    vector<double> max_ranges = {10, 100, 1.28, 5, 30, 10, 100, 100, 100, 5.12, 600, 1, 10, 100, M_PI, 10, 10, 500, 100, 10, 32, 5.12, 10};
-
-    // Vector to store function names and their corresponding benchmark functions
-    vector<pair<string, function<double(const vector<double> &)>>> functionBenchmarks = {
-        {"sumSquares", sumSquares}, {"step2", step2}, {"quartic", quartic}, {"powell", powell}, {"rosenbrock", rosenbrock}, {"dixonPrice", dixonPrice}, {"schwefel1_2", schwefel1_2}, {"schwefel2_20", schwefel2_20}, {"schwefel2_21", schwefel2_21}, {"rastrigin", rastrigin}, {"griewank", griewank}, {"csendes", csendes}, {"colville", colville}, {"easom", easom}, {"michalewicz", michalewicz}, {"shekel", shekel}, {"schwefel2_4", schwefel2_4}, {"schwefel", schwefel}, {"schaffer", schaffer}, {"alpine", alpine}, {"ackley", ackley}, {"sphere", sphere}, {"schwefel2_22", schwefel2_22}};
+    vector<FunctionBenchmark> functionBenchmarks = {
+        {60, -10, 10, "sumSquares", sumSquares},
+        {60, -100, 100, "step2", step2},
+        {60, -1.28, 1.28, "quartic", quartic},
+        {60, -4, 5, "powell", powell},
+        {60, -30, 30, "rosenbrock", rosenbrock},
+        {60, -10, 10, "dixonPrice", dixonPrice},
+        {60, -100, 100, "schwefel1_2", schwefel1_2},
+        {60, -100, 100, "schwefel2_20", schwefel2_20},
+        {60, -100, 100, "schwefel2_21", schwefel2_21},
+        {60, -5.12, 5.12, "rastrigin", rastrigin},
+        {60, -600, 600, "griewank", griewank},
+        {60, -1, 1, "csendes", csendes},
+        {4, -10, 10, "colville", colville},
+        {2, -100, 100, "easom", easom},
+        {5, 0, M_PI, "michalewicz", michalewicz},
+        {4, 0, 10, "shekel", shekel},
+        {60, 0, 10, "schwefel2_4", schwefel2_4},
+        {60, -500, 500, "schwefel", schwefel},
+        {60, -100, 100, "schaffer", schaffer},
+        {30, -10, 10, "alpine", alpine},
+        {30, -32, 32, "ackley", ackley},
+        {30, -5.12, 5.12, "sphere", sphere},
+        {30, -10, 10, "schwefel2_22", schwefel2_22}};
 
     // Table header
     printElement("Function", nameWidth);
@@ -121,11 +147,12 @@ int main()
     cout << endl;
 
     // Run the Firefly Algorithm for each function
-    for (int i = 0; i < functionBenchmarks.size(); ++i)
-    {
-        const auto &funcPair = functionBenchmarks[i];
-        string function_name = funcPair.first;
-        auto benchmark = funcPair.second;
+    for (const auto &funcBenchmark : functionBenchmarks) {
+        string function_name = funcBenchmark.name;
+        auto benchmark = funcBenchmark.benchmark;
+        int dim = funcBenchmark.dim;
+        double min_range = funcBenchmark.min_range;
+        double max_range = funcBenchmark.max_range;
 
         auto results = vector<double>();
 
@@ -137,7 +164,7 @@ int main()
 
             for (int j = 0; j < numberOfRuns; ++j)
             {
-                result += fireflyAlgorithm(dims[i], min_ranges[i], max_ranges[i], benchmark, threads);
+                result += fireflyAlgorithm(dim, min_range, max_range, benchmark, threads);
             }
 
             printElement(result / numberOfRuns, numWidth);
