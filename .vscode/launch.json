@@ -8,7 +8,7 @@
             "type": "lldb",
             "request": "launch",
             "name": "Debug",
-            "program": "${workspaceFolder}/${fileBasenameNoExtension}.exe",
+            "program": "${workspaceFolder}/firefly.exe",
             "args": [],
             "cwd": "${workspaceFolder}",
             "preLaunchTask": "build"
