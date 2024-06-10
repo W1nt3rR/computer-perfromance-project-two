@@ -7,6 +7,7 @@
 #include <omp.h>
 #include <iomanip>
 #include <functional>
+#include <chrono>
 #include "functions.cpp"
 
 #ifndef M_PI
@@ -24,12 +25,47 @@ const double gammaCoeff = 1.0; // Absorption coefficient
 
 // Other Parameters
 const int numberOfRuns = 30;
+const int minimumThreads = 1;
 const int numberOfThreads = omp_get_max_threads();
 
 // Table formatting
 const char separator = ' ';
 const int nameWidth = 18;
 const int numWidth = 16;
+
+struct FunctionBenchmark
+{
+    int dim;
+    double min_range;
+    double max_range;
+    string name;
+    function<double(const vector<double> &)> benchmark;
+};
+
+const vector<FunctionBenchmark> functionBenchmarks = {
+    {60, -10, 10, "sumSquares", sumSquares},
+    {60, -100, 100, "step2", step2},
+    {60, -1.28, 1.28, "quartic", quartic},
+    {60, -4, 5, "powell", powell},
+    {60, -30, 30, "rosenbrock", rosenbrock},
+    {60, -10, 10, "dixonPrice", dixonPrice},
+    {60, -100, 100, "schwefel1_2", schwefel1_2},
+    {60, -100, 100, "schwefel2_20", schwefel2_20},
+    {60, -100, 100, "schwefel2_21", schwefel2_21},
+    {60, -5.12, 5.12, "rastrigin", rastrigin},
+    {60, -600, 600, "griewank", griewank},
+    {60, -1, 1, "csendes", csendes},
+    {4, -10, 10, "colville", colville},
+    {2, -100, 100, "easom", easom},
+    {5, 0, M_PI, "michalewicz", michalewicz},
+    {4, 0, 10, "shekel", shekel},
+    {60, 0, 10, "schwefel2_4", schwefel2_4},
+    {60, -500, 500, "schwefel", schwefel},
+    {60, -100, 100, "schaffer", schaffer},
+    {30, -10, 10, "alpine", alpine},
+    {30, -32, 32, "ackley", ackley},
+    {30, -5.12, 5.12, "sphere", sphere},
+    {30, -10, 10, "schwefel2_22", schwefel2_22}};
 
 // Function to generate random double between min and max using a thread-safe generator
 double randomDouble(double min, double max, mt19937 &rng, uniform_real_distribution<> &dist)
@@ -103,49 +139,14 @@ void printElement(T t, const int &width)
     cout.flush();
 }
 
-struct FunctionBenchmark
-{
-    int dim;
-    double min_range;
-    double max_range;
-    string name;
-    function<double(const vector<double> &)> benchmark;
-};
-
 int main()
 {
-    vector<FunctionBenchmark> functionBenchmarks = {
-        {60, -10, 10, "sumSquares", sumSquares},
-        {60, -100, 100, "step2", step2},
-        {60, -1.28, 1.28, "quartic", quartic},
-        {60, -4, 5, "powell", powell},
-        {60, -30, 30, "rosenbrock", rosenbrock},
-        {60, -10, 10, "dixonPrice", dixonPrice},
-        {60, -100, 100, "schwefel1_2", schwefel1_2},
-        {60, -100, 100, "schwefel2_20", schwefel2_20},
-        {60, -100, 100, "schwefel2_21", schwefel2_21},
-        {60, -5.12, 5.12, "rastrigin", rastrigin},
-        {60, -600, 600, "griewank", griewank},
-        {60, -1, 1, "csendes", csendes},
-        {4, -10, 10, "colville", colville},
-        {2, -100, 100, "easom", easom},
-        {5, 0, M_PI, "michalewicz", michalewicz},
-        {4, 0, 10, "shekel", shekel},
-        {60, 0, 10, "schwefel2_4", schwefel2_4},
-        {60, -500, 500, "schwefel", schwefel},
-        {60, -100, 100, "schaffer", schaffer},
-        {30, -10, 10, "alpine", alpine},
-        {30, -32, 32, "ackley", ackley},
-        {30, -5.12, 5.12, "sphere", sphere},
-        {30, -10, 10, "schwefel2_22", schwefel2_22}};
-
     // Table header
     printElement("Function", nameWidth);
-    for (int threads = 1; threads <= numberOfThreads; threads *= 2)
+    for (int threads = minimumThreads; threads <= numberOfThreads; threads *= 2)
     {
         printElement(to_string(threads) + (threads == 1 ? " Thread" : " Threads"), numWidth);
     }
-    printElement("Best Performance", numWidth);
     cout << endl;
     cout << endl;
 
@@ -158,31 +159,23 @@ int main()
         double min_range = funcBenchmark.min_range;
         double max_range = funcBenchmark.max_range;
 
-        auto results = vector<double>();
-
         printElement(function_name, nameWidth);
 
-        for (int threads = 1; threads <= numberOfThreads; threads *= 2)
+        for (int threads = minimumThreads; threads <= numberOfThreads; threads *= 2)
         {
-            double result = 0.0;
+            auto start = chrono::high_resolution_clock::now();
 
             for (int j = 0; j < numberOfRuns; ++j)
             {
-                result += fireflyAlgorithm(dim, min_range, max_range, benchmark, threads);
+                fireflyAlgorithm(dim, min_range, max_range, benchmark, threads);
             }
 
-            printElement(result / numberOfRuns, numWidth);
+            auto end = chrono::high_resolution_clock::now();
 
-            results.push_back(result / numberOfRuns);
+            chrono::duration<double> elapsed = end - start;
+
+            printElement(elapsed / numberOfRuns, numWidth);
         }
-
-        auto min_element_it = min_element(results.begin(), results.end());
-
-        int best_index = distance(results.begin(), min_element_it);
-
-        int numThreads = static_cast<int>(pow(2, best_index));
-        string threadText = numThreads == 1 ? " Thread" : " Threads";
-        printElement(to_string(numThreads) + threadText, numWidth);
 
         cout << endl;
     }
