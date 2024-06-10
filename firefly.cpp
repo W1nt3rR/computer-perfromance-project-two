@@ -132,6 +132,13 @@ double fireflyAlgorithm(int dim, double min_range, double max_range, function<do
     return fitness[best_index];
 }
 
+struct Benchmark
+{
+    int threadCount;
+    string functionName;
+    chrono::duration<double> time;
+};
+
 template <typename T>
 void printElement(T t, const int &width)
 {
@@ -147,6 +154,7 @@ int main()
     {
         printElement(to_string(threads) + (threads == 1 ? " Thread" : " Threads"), numWidth);
     }
+    printElement("Best", numWidth);
     cout << endl;
     cout << endl;
 
@@ -158,6 +166,8 @@ int main()
         int dim = funcBenchmark.dim;
         double min_range = funcBenchmark.min_range;
         double max_range = funcBenchmark.max_range;
+
+        vector<Benchmark> benchmarkData;
 
         printElement(function_name, nameWidth);
 
@@ -174,8 +184,24 @@ int main()
 
             chrono::duration<double> elapsed = end - start;
 
+            Benchmark b;
+            b.threadCount = threads;
+            b.functionName = function_name;
+            b.time = elapsed / numberOfRuns;
+
+            benchmarkData.push_back(b);
+
             printElement(elapsed / numberOfRuns, numWidth);
         }
+
+        // Find the best time
+        auto min_element_it = min_element(benchmarkData.begin(), benchmarkData.end(), [](const Benchmark &a, const Benchmark &b) {
+            return a.time < b.time;
+        });
+
+        int best_index = distance(benchmarkData.begin(), min_element_it);
+
+        printElement(to_string(benchmarkData[best_index].threadCount) + (benchmarkData[best_index].threadCount == 1 ? " Thread" : " Threads"), numWidth);
 
         cout << endl;
     }
