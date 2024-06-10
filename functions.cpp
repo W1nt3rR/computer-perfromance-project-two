@@ -3,6 +3,7 @@
 #include <vector>
 #include <cstdlib>
 #include <numeric>
+#include <random>
 
 #ifndef M_PI
 #define M_PI 3.14159265358979323846
@@ -31,9 +32,12 @@ double step2(const vector<double>& x) {
 }
 
 double quartic(const vector<double>& x) {
+    static thread_local mt19937 rng(random_device{}());
+    static thread_local uniform_real_distribution<double> dist(0.0, 1.0);
+    
     double sum = 0.0;
     for (size_t i = 0; i < x.size(); ++i) {
-        sum += (i + 1) * pow(x[i], 4) + static_cast<double>(rand()) / RAND_MAX;
+        sum += (i + 1) * pow(x[i], 4) + dist(rng);
     }
     return sum;
 }
@@ -90,9 +94,7 @@ double schwefel2_20(const vector<double>& x) {
 double schwefel2_21(const vector<double>& x) {
     double maxVal = fabs(x[0]);
     for (double xi : x) {
-        if (fabs(xi) > maxVal) {
-            maxVal = fabs(xi);
-        }
+        maxVal = max(maxVal, fabs(xi));
     }
     return maxVal;
 }
