@@ -78,6 +78,7 @@ double fireflyAlgorithm(int dim, double min_range, double max_range, function<do
 {
     omp_set_num_threads(numThreads);
 
+    // Initialize vectors
     vector<vector<double>> population(population_size, vector<double>(dim));
     vector<double> fitness(population_size);
 
@@ -85,13 +86,18 @@ double fireflyAlgorithm(int dim, double min_range, double max_range, function<do
     #pragma omp parallel for schedule(dynamic)
     for (int i = 0; i < population_size; ++i)
     {
+        // Random number generator
         mt19937 rng(random_device{}() + omp_get_thread_num());
+        // Uniformly distributes those numbers between the specified range
+        // Now each number has the same chance of being chosen
         uniform_real_distribution<> dist(0.0, 1.0);
 
         for (int j = 0; j < dim; ++j)
         {
+            // Set position in the search space for each firefly (a vector of random values in a specific range)
             population[i][j] = randomDouble(min_range, max_range, rng, dist);
         }
+        // Calculate the fitness values for each firefly with its initial position
         fitness[i] = benchmark(population[i]);
     }
 
@@ -112,20 +118,31 @@ double fireflyAlgorithm(int dim, double min_range, double max_range, function<do
                     {
                         r += pow(population[i][k] - population[j][k], 2);
                     }
+                    // Calculating Euclidian distance which determines the attractivness of one firefly to another
+                    // The closer the better
                     r = sqrt(r);
 
+                    // alpha - randomness
+                    // beta - attractivness     
+                    // This line calculates the attractiveness of firefly j to firefly i based on their distance r    
                     double beta = beta0 * exp(-gammaCoeff * r * r);
                     for (int k = 0; k < dim; ++k)
                     {
+                        // Multiplying attractivness with the direction from firefly i to firefly j 
+                        // population[j][k] - population[i][k] (distance between the two, if negative firefly i is to the right else j is) 
+                        // Then we add the randomness to prevent local optima
                         population[i][k] += beta * (population[j][k] - population[i][k]) + alpha * (randomDouble(0, 1, rng, dist) - 0.5);
+                        // Ensures that the new position of firefly i in dimension k remains within the specified bounds
                         population[i][k] = min(max(population[i][k], min_range), max_range);
                     }
+                    // Reevalute fitness for firefly i
                     fitness[i] = benchmark(population[i]);
                 }
             }
         }
     }
 
+    // Identifying the index of the superior firefly 
     auto min_element_it = min_element(fitness.begin(), fitness.end());
     int best_index = distance(fitness.begin(), min_element_it);
 
