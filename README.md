@@ -52,7 +52,6 @@ This guide will help you set up MSYS2 to work with Visual Studio Code for C/C++ 
 
 ### 1. EPYC 32 processor
 
-    ```
     Function        1 Thread     2 Threads    4 Threads    8 Threads    16 Threads   32 Threads   64 Threads   Best
        
     sumSquares      0.407453s    0.213925s    0.134193s    0.082021s    0.058176s    0.048877s    0.049932s    32 Threads
@@ -78,11 +77,9 @@ This guide will help you set up MSYS2 to work with Visual Studio Code for C/C++ 
     ackley          0.656503s    0.373448s    0.198644s    0.111539s    0.070972s    0.051459s    0.050702s    64 Threads
     sphere          0.267508s    0.165615s    0.091066s    0.058244s    0.041963s    0.035389s    0.036648s    32 Threads
     schwefel2_22    0.271436s    0.166823s    0.093927s    0.059296s    0.042030s    0.035820s    0.036809s    32 Threads
-    ```
 
 ### 2. Intel Core i5-7200U
 
-    ```
     Function          1 Thread        2 Threads       4 Threads       Best
           
     sumSquares        0.556608s       0.352304s       0.268045s       4 Threads
@@ -108,11 +105,9 @@ This guide will help you set up MSYS2 to work with Visual Studio Code for C/C++ 
     ackley            1.13396s        0.584685s       0.419165s       4 Threads
     sphere            0.400215s       0.252536s       0.205031s       4 Threads
     schwefel2_22      0.363431s       0.234626s       0.195932s       4 Threads
-    ```
 
 ### 3. Ryzen 7 5825U
 
-    ```
     Function          1 Thread        2 Threads       4 Threads       8 Threads       16 Threads      Best
 
     sumSquares        0.225248s       0.127604s       0.0832489s      0.067521s       0.0753114s      8 Threads
@@ -138,11 +133,9 @@ This guide will help you set up MSYS2 to work with Visual Studio Code for C/C++ 
     ackley            0.848329s       0.451769s       0.262129s       0.174342s       0.156157s       16 Threads
     sphere            0.153317s       0.0898572s      0.0596597s      0.0501195s      0.0602818s      8 Threads
     schwefel2_22      0.126089s       0.0760976s      0.0521025s      0.0449394s      0.0571523s      8 Threads
-    ```
 
 ### 4. Ryzen 7 5700U
 
-    ```
     Function          1 Thread        2 Threads       4 Threads       8 Threads       16 Threads      Best
 
     sumSquares        0.345286s       0.224498s       0.127089s       0.100642s       0.130611s       8 Threads
@@ -168,4 +161,3 @@ This guide will help you set up MSYS2 to work with Visual Studio Code for C/C++ 
     ackley            0.607943s       0.440826s       0.262575s       0.162955s       0.154589s       16 Threads
     sphere            0.237115s       0.206815s       0.121635s       0.095666s       0.139325s       8 Threads
     schwefel2_22      0.243965s       0.209034s       0.123953s       0.095657s       0.135263s       8 Threads
-    ```
