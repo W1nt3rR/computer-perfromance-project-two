@@ -50,7 +50,7 @@ This guide will help you set up MSYS2 to work with Visual Studio Code for C/C++ 
 
 # Results:
 
-### 1. EPYC 32 processor
+### 1. EPYC Milan 32-core processor
 
     Function        1 Thread     2 Threads    4 Threads    8 Threads    16 Threads   32 Threads   64 Threads   Best
        
@@ -106,7 +106,7 @@ This guide will help you set up MSYS2 to work with Visual Studio Code for C/C++ 
     sphere            0.400215s       0.252536s       0.205031s       4 Threads
     schwefel2_22      0.363431s       0.234626s       0.195932s       4 Threads
 
-### 3. Ryzen 7 5825U
+### 3. AMD Ryzen 7 5825U
 
     Function          1 Thread        2 Threads       4 Threads       8 Threads       16 Threads      Best
 
@@ -134,7 +134,7 @@ This guide will help you set up MSYS2 to work with Visual Studio Code for C/C++ 
     sphere            0.153317s       0.0898572s      0.0596597s      0.0501195s      0.0602818s      8 Threads
     schwefel2_22      0.126089s       0.0760976s      0.0521025s      0.0449394s      0.0571523s      8 Threads
 
-### 4. Ryzen 7 5700U
+### 4. AMD Ryzen 7 5700U
 
     Function          1 Thread        2 Threads       4 Threads       8 Threads       16 Threads      Best
 
