@@ -163,6 +163,40 @@ void printElement(T t, const int &width)
     cout.flush();
 }
 
+bool isNotPowerOfTwo(int n) {
+    if (n == 0) {
+        return true;
+    }
+    return n & (n - 1);
+}
+
+Benchmark executeBenchmark(const FunctionBenchmark &functionBenchmark, int threads)
+{
+    string function_name = functionBenchmark.name;
+    auto benchmark = functionBenchmark.benchmark;
+    int dim = functionBenchmark.dim;
+    double min_range = functionBenchmark.min_range;
+    double max_range = functionBenchmark.max_range;
+
+    auto start = chrono::high_resolution_clock::now();
+
+    for (int j = 0; j < numberOfRuns; ++j)
+    {
+        fireflyAlgorithm(dim, min_range, max_range, benchmark, threads);
+    }
+
+    auto end = chrono::high_resolution_clock::now();
+
+    chrono::duration<double> elapsed = end - start;
+
+    Benchmark b;
+    b.threadCount = threads;
+    b.functionName = function_name;
+    b.time = elapsed / numberOfRuns;
+
+    return b;
+}
+
 int main()
 {
     // Table header
@@ -171,6 +205,15 @@ int main()
     {
         printElement(to_string(threads) + (threads == 1 ? " Thread" : " Threads"), numWidth);
     }
+
+    bool isNotPowerOfTwoThreads = isNotPowerOfTwo(numberOfThreads);
+
+    // If the max threads is not a power of two, add it to the table
+    if (isNotPowerOfTwoThreads)
+    {
+        printElement(to_string(numberOfThreads) + " Threads", numWidth);
+    }
+
     printElement("Best", numWidth);
     cout << endl;
     cout << endl;
@@ -178,37 +221,25 @@ int main()
     // Run the Firefly Algorithm for each function
     for (const auto &funcBenchmark : functionBenchmarks)
     {
-        string function_name = funcBenchmark.name;
-        auto benchmark = funcBenchmark.benchmark;
-        int dim = funcBenchmark.dim;
-        double min_range = funcBenchmark.min_range;
-        double max_range = funcBenchmark.max_range;
-
         vector<Benchmark> benchmarkData;
+        string function_name = funcBenchmark.name;
 
         printElement(function_name, nameWidth);
 
+        // Execute the benchmark for each number of threads
         for (int threads = minimumThreads; threads <= numberOfThreads; threads *= 2)
         {
-            auto start = chrono::high_resolution_clock::now();
+            Benchmark bench = executeBenchmark(funcBenchmark, threads);
+            printElement(bench.time, numWidth);
+            benchmarkData.push_back(bench);
+        }
 
-            for (int j = 0; j < numberOfRuns; ++j)
-            {
-                fireflyAlgorithm(dim, min_range, max_range, benchmark, threads);
-            }
-
-            auto end = chrono::high_resolution_clock::now();
-
-            chrono::duration<double> elapsed = end - start;
-
-            Benchmark b;
-            b.threadCount = threads;
-            b.functionName = function_name;
-            b.time = elapsed / numberOfRuns;
-
-            benchmarkData.push_back(b);
-
-            printElement(elapsed / numberOfRuns, numWidth);
+        // If the max threads is not a power of two, run a benchmark for it
+        if (isNotPowerOfTwoThreads)
+        {
+            Benchmark bench = executeBenchmark(funcBenchmark, numberOfThreads);
+            printElement(bench.time, numWidth);
+            benchmarkData.push_back(bench);
         }
 
         // Find the best time
