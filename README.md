@@ -1,3 +1,12 @@
+# Performance of computer systems
+
+### This is a program designed to benchmark the performance of your processor, to show how multi threading can improve performance.
+
+# Getting started
+
+### To get started you can follow the instructions bellow to setup and compile the benchmark program.
+The reason we compile the program on each computer is to make use of **-march=native -mtune=native** compiler flags to tune the program to the host processor to squeeze the most performance out of it.
+
 # MSYS2 with Visual Studio Code
 
 This guide will help you set up MSYS2 to work with Visual Studio Code for C/C++ development.
