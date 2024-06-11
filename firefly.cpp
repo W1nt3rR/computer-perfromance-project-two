@@ -206,12 +206,12 @@ int main()
         printElement(to_string(threads) + (threads == 1 ? " Thread" : " Threads"), numWidth);
     }
 
-    bool isNotPowerOfTwoThreads = isNotPowerOfTwo(omp_get_max_threads());
+    bool isNotPowerOfTwoThreads = isNotPowerOfTwo(numberOfThreads);
 
     // If the max threads is not a power of two, add it to the table
     if (isNotPowerOfTwoThreads)
     {
-        printElement(to_string(omp_get_max_threads()) + " Threads", numWidth);
+        printElement(to_string(numberOfThreads) + " Threads", numWidth);
     }
 
     printElement("Best", numWidth);
@@ -237,7 +237,7 @@ int main()
         // If the max threads is not a power of two, run a benchmark for it
         if (isNotPowerOfTwoThreads)
         {
-            Benchmark bench = executeBenchmark(funcBenchmark, omp_get_max_threads());
+            Benchmark bench = executeBenchmark(funcBenchmark, numberOfThreads);
             printElement(bench.time, numWidth);
             benchmarkData.push_back(bench);
         }
