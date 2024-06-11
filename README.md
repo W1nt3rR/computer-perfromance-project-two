@@ -183,28 +183,28 @@ Laptop processors we tested on sometimes show preference of lower core count. Th
     schwefel2_22      0.243965s       0.209034s       0.123953s       0.095657s       0.135263s       8 Threads
 
 ### 5. AMD Ryzen 5 5600H
-    Function          1 Thread        2 Threads       4 Threads       8 Threads       Best
+    Function          1 Thread        2 Threads       4 Threads       8 Threads       12 Threads      Best
 
-    sumSquares        0.337793s       0.190739s       0.108933s       0.0782515s      8 Threads       
-    step2             0.325034s       0.18597s        0.104346s       0.073965s       8 Threads       
-    quartic           2.13184s        1.11659s        0.60006s        0.40346s        8 Threads       
-    powell            0.623221s       0.337071s       0.189338s       0.126009s       8 Threads       
-    rosenbrock        0.329833s       0.182826s       0.105207s       0.074919s       8 Threads       
-    dixonPrice        0.344295s       0.188773s       0.108811s       0.0767402s      8 Threads       
-    schwefel1_2       0.581924s       0.314442s       0.176186s       0.119087s       8 Threads       
-    schwefel2_20      0.324573s       0.184861s       0.103854s       0.0738347s      8 Threads       
-    schwefel2_21      0.316275s       0.188543s       0.13757s        0.0921338s      8 Threads       
-    rastrigin         1.00007s        0.670736s       0.359904s       0.207343s       8 Threads       
-    griewank          0.931619s       0.678597s       0.340308s       0.194592s       8 Threads       
-    csendes           1.60481s        1.04092s        0.437129s       0.267856s       8 Threads       
-    colville          0.146538s       0.0860843s      0.0521661s      0.0430411s      8 Threads       
-    easom             0.124704s       0.074294s       0.0447413s      0.0415501s      8 Threads       
-    michalewicz       0.279958s       0.152553s       0.0893345s      0.0624534s      8 Threads       
-    shekel            0.151758s       0.0916595s      0.0546879s      0.0448515s      8 Threads       
-    schwefel2_4       0.339271s       0.188093s       0.108866s       0.0785132s      8 Threads       
-    schwefel          0.760981s       0.408247s       0.225218s       0.150858s       8 Threads       
-    schaffer          1.0341s         0.551195s       0.299982s       0.18303s        8 Threads       
-    alpine            0.471997s       0.260819s       0.145365s       0.0963112s      8 Threads       
-    ackley            0.590372s       0.322163s       0.177186s       0.113552s       8 Threads       
-    sphere            0.227847s       0.129542s       0.0767713s      0.0565336s      8 Threads       
-    schwefel2_22      0.2317s         0.134449s       0.0766707s      0.0559849s      8 Threads
+    sumSquares        0.336785s       0.187242s       0.107734s       0.0846207s      0.0854374s      8 Threads       
+    step2             0.326144s       0.181906s       0.10866s        0.0856895s      0.0832756s      12 Threads      
+    quartic           2.15792s        1.19508s        0.621454s       0.492164s       0.444938s       12 Threads      
+    powell            0.639279s       0.364551s       0.194751s       0.144077s       0.139823s       12 Threads      
+    rosenbrock        0.332983s       0.18779s        0.104377s       0.0833073s      0.0851895s      8 Threads       
+    dixonPrice        0.343477s       0.193906s       0.107503s       0.0850083s      0.0852415s      8 Threads       
+    schwefel1_2       0.588535s       0.317882s       0.178409s       0.1306s         0.128972s       12 Threads      
+    schwefel2_20      0.32592s        0.181393s       0.102709s       0.0820605s      0.0832918s      8 Threads       
+    schwefel2_21      0.319554s       0.178604s       0.103897s       0.0849614s      0.08331s        12 Threads      
+    rastrigin         0.988962s       0.531349s       0.292321s       0.212993s       0.183623s       12 Threads      
+    griewank          0.918689s       0.488857s       0.269236s       0.201483s       0.18626s        12 Threads      
+    csendes           1.57522s        0.84472s        0.498587s       0.345822s       0.291826s       12 Threads      
+    colville          0.148399s       0.11158s        0.0660295s      0.0567754s      0.0672603s      8 Threads       
+    easom             0.143735s       0.0962747s      0.0530788s      0.0516839s      0.062897s       8 Threads       
+    michalewicz       0.323641s       0.183451s       0.108375s       0.0777597s      0.0728577s      12 Threads      
+    shekel            0.155297s       0.116693s       0.0703305s      0.0537658s      0.0631621s      8 Threads       
+    schwefel2_4       0.348008s       0.216946s       0.107277s       0.0847497s      0.0848117s      8 Threads       
+    schwefel          0.765319s       0.429556s       0.250805s       0.199017s       0.184809s       12 Threads      
+    schaffer          1.03996s        0.571425s       0.32212s        0.236189s       0.203656s       12 Threads      
+    alpine            0.472549s       0.260747s       0.142005s       0.107024s       0.103026s       12 Threads      
+    ackley            0.592988s       0.321003s       0.190595s       0.12696s        0.116254s       12 Threads      
+    sphere            0.22951s        0.131787s       0.0779729s      0.0629994s      0.066153s       8 Threads       
+    schwefel2_22      0.232984s       0.133884s       0.0747198s      0.0605666s      0.0678155s      8 Threads
