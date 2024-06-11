@@ -49,8 +49,19 @@ This guide will help you set up MSYS2 to work with Visual Studio Code for C/C++ 
 ### 5. Run with VS Code Debug
 
 # Results:
+Results generaly show a preference for higher thread count, though there are a few exceptions:
 
-### 1. EPYC Milan 32-core processor
+### 1. Core count limitation
+
+Most modern processors have multiple threads per core (AMD SMT, Intel Hyper-Threading), meaning they can make the core execute two workloads simultaneously, provided they do not overlap in what part of the core they use. In the **EPYC Milan 32-core** test, some functions suffer from this when going to 64 threads from 32 threads on a 32-core processor, some other functions prefer it, although not by much.
+
+### 2. Power limit
+
+Laptop processors we tested on sometimes show preference of lower core count. That can be explained by power or temeprature limits. When pushed really hard as in this case, meaning we use multiple cores at once, they are forced to lower their core clocks to stay in their power and/or temeprature budget. That makes lower core count have higher core frequencies and thus executing the program threads faster. Multithreading overhead is way worse in this case.
+
+# CPUs tested:
+
+### 1. EPYC Milan 32-core
 
     Function        1 Thread     2 Threads    4 Threads    8 Threads    16 Threads   32 Threads   64 Threads   Best
        
