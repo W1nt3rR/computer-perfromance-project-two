@@ -113,14 +113,21 @@ double fireflyAlgorithm(int dim, double min_range, double max_range, function<do
             {
                 if (fitness[i] > fitness[j])
                 {
-                    double r = 0.0;
+                    int intersect = 0;
+                    int unionSize = dim;
                     for (int k = 0; k < dim; ++k)
                     {
-                        r += pow(population[i][k] - population[j][k], 2);
+                        if (population[i][k] == population[j][k])
+                        {
+                            intersect++;
+                        }
+                        else
+                        {
+                            unionSize++;
+                        }
                     }
-                    // Calculating Euclidian distance which determines the attractivness of one firefly to another
-                    // The closer the better
-                    r = sqrt(r);
+                    // Calculate the distance between two vectors using cosine similarity
+                    double r = 1.0 - (double)intersect / unionSize;
 
                     // alpha - randomness
                     // beta - attractivness     
