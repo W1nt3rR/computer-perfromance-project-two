@@ -19,9 +19,9 @@ using namespace std;
 // Firefly Algorithm parameters
 const int population_size = 50;
 const int max_generations = 500;
-const double alpha = 0.5;      // Randomness strength
+const double alpha = 0.05;      // Randomness strength
 const double beta0 = 1.0;      // Attractiveness constant
-const double gammaCoeff = 1.0; // Absorption coefficient
+const double gammaCoeff = 0.5; // Absorption coefficient
 
 // Other Parameters
 const int numberOfRuns = 30;
