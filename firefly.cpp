@@ -8,40 +8,40 @@
 #include <iomanip>
 #include <functional>
 #include <chrono>
+#include <sstream>
+#include <fstream>
 #include "functions.cpp"
-
-#ifndef M_PI
-#define M_PI 3.14159265358979323846
-#endif
+#include "helper_functions.cpp"
+#include "firefly.hpp"
 
 using namespace std;
 
-// Firefly Algorithm parameters
+/**
+ * Firefly Algorithm parameters
+ */
 const int population_size = 50;
 const int max_generations = 4000;
-const double alpha = 0.05;      // Randomness strength
+const double alpha = 0.05;     // Randomness strength
 const double beta0 = 1.0;      // Attractiveness constant
 const double gammaCoeff = 0.5; // Absorption coefficient
 
-// Other Parameters
+/**
+ * Other Parameters
+ */
 const int numberOfRuns = 30;
 const int minimumThreads = 1;
 const int numberOfThreads = omp_get_max_threads();
+const bool isNotPowerOfTwoThreads = isNotPowerOfTwo(numberOfThreads);
 
-// Table formatting
-const char separator = ' ';
-const int nameWidth = 18;
-const int numWidth = 16;
+/**
+ * Table formatting
+ */
+const int nameWidth = 16;
+const int numWidth = 14;
 
-struct FunctionBenchmark
-{
-    int dim;
-    double min_range;
-    double max_range;
-    string name;
-    function<double(const vector<double> &)> benchmark;
-};
-
+/**
+ * Function benchmarks
+ */
 const vector<FunctionBenchmark> functionBenchmarks = {
     {60, -10, 10, "sumSquares", sumSquares},
     {60, -100, 100, "step2", step2},
@@ -67,13 +67,9 @@ const vector<FunctionBenchmark> functionBenchmarks = {
     {30, -5.12, 5.12, "sphere", sphere},
     {30, -10, 10, "schwefel2_22", schwefel2_22}};
 
-// Function to generate random double between min and max using a thread-safe generator
-double randomDouble(double min, double max, mt19937 &rng, uniform_real_distribution<> &dist)
-{
-    return min + dist(rng) * (max - min);
-}
-
-// Firefly Algorithm
+/**
+ * Firefly Algorithm
+ */
 double fireflyAlgorithm(int dim, double min_range, double max_range, function<double(const vector<double> &)> benchmark, int numThreads)
 {
     omp_set_num_threads(numThreads);
@@ -156,27 +152,9 @@ double fireflyAlgorithm(int dim, double min_range, double max_range, function<do
     return fitness[best_index];
 }
 
-struct Benchmark
-{
-    int threadCount;
-    string functionName;
-    chrono::duration<double> time;
-};
-
-template <typename T>
-void printElement(T t, const int &width)
-{
-    cout << left << setw(width) << setfill(separator) << t;
-    cout.flush();
-}
-
-bool isNotPowerOfTwo(int n) {
-    if (n == 0) {
-        return true;
-    }
-    return n & (n - 1);
-}
-
+/**
+ * Execute the benchmark for a specific function and number of threads
+ */
 Benchmark executeBenchmark(const FunctionBenchmark &functionBenchmark, int threads)
 {
     string function_name = functionBenchmark.name;
@@ -187,9 +165,11 @@ Benchmark executeBenchmark(const FunctionBenchmark &functionBenchmark, int threa
 
     auto start = chrono::high_resolution_clock::now();
 
+    vector<double> results(numberOfRuns);
+
     for (int j = 0; j < numberOfRuns; ++j)
     {
-        fireflyAlgorithm(dim, min_range, max_range, benchmark, threads);
+        results.push_back(fireflyAlgorithm(dim, min_range, max_range, benchmark, threads));
     }
 
     auto end = chrono::high_resolution_clock::now();
@@ -200,30 +180,202 @@ Benchmark executeBenchmark(const FunctionBenchmark &functionBenchmark, int threa
     b.threadCount = threads;
     b.functionName = function_name;
     b.time = elapsed / numberOfRuns;
+    b.averageResult = calculateAverage(results);
+    b.bestResult = *min_element(results.begin(), results.end());
 
     return b;
 }
 
-int main()
-{
-    // Table header
+/**
+ * Print the table header
+ */
+void printTableHeader() {
     printElement("Function", nameWidth);
     for (int threads = minimumThreads; threads <= numberOfThreads; threads *= 2)
     {
         printElement(to_string(threads) + (threads == 1 ? " Thread" : " Threads"), numWidth);
     }
 
-    bool isNotPowerOfTwoThreads = isNotPowerOfTwo(numberOfThreads);
-
     // If the max threads is not a power of two, add it to the table
     if (isNotPowerOfTwoThreads)
     {
         printElement(to_string(numberOfThreads) + " Threads", numWidth);
     }
+}
 
+/**
+ * Print the table title
+ */
+void printTableTitle(string title, int titlePadding = 2, int extraCells = 0)
+{
+    string newTitle = string(titlePadding, ' ') + title + string(titlePadding, ' ');
+    int titleWidth = newTitle.length();
+
+    int tableWidth = nameWidth + (extraCells + 1 + log2(numberOfThreads) - log2(minimumThreads)) * numWidth + (isNotPowerOfTwoThreads ? numWidth : 0);
+    int sidePadding = (tableWidth - titleWidth) / 2;
+
+    cout << setfill('=') << setw(sidePadding) << "=";
+    cout << setfill(' ') << setw(titleWidth) << newTitle;
+    cout << setfill('=') << setw(sidePadding) << "=";
+    cout << endl;
+}
+
+/**
+ * Print the results table
+ */
+void printResultsTable(vector<vector<Benchmark>> &allBenchmarkData)
+{
+    printTableTitle("Average Results Table");
+    printTableHeader();
+    cout << endl;
+    cout << endl;
+
+    for (int i = 0; i < allBenchmarkData.size(); i++)
+    {
+        printElement(functionBenchmarks[i].name, nameWidth);
+
+        for (int j = 0; j < allBenchmarkData[i].size(); j++)
+        {
+            printElement(allBenchmarkData[i][j].averageResult, numWidth);
+        }
+
+        cout << endl;
+    }
+
+    cout << endl;
+    cout << endl;
+}
+
+/**
+ * Print the best results table
+ */
+void printBestResultsTable(vector<vector<Benchmark>> &allBenchmarkData)
+{
+    printTableTitle("Best Results Table");
+    printTableHeader();
+    cout << endl;
+    cout << endl;
+
+    for (int i = 0; i < allBenchmarkData.size(); i++)
+    {
+        printElement(functionBenchmarks[i].name, nameWidth);
+
+        for (int j = 0; j < allBenchmarkData[i].size(); j++)
+        {
+            printElement(allBenchmarkData[i][j].bestResult, numWidth);
+        }
+
+        cout << endl;
+    }
+
+    cout << endl;
+    cout << endl;
+}
+
+/**
+ * Print the speedup table
+ */
+void printSpeedupTable(vector<vector<Benchmark>> &allBenchmarkData)
+{
+    printTableTitle("Speedup Table");
+    printTableHeader();
+    cout << endl;
+    cout << endl;
+
+    for (int i = 0; i < allBenchmarkData.size(); i++)
+    {
+        printElement(functionBenchmarks[i].name, nameWidth);
+
+        for (int j = 0; j < allBenchmarkData[i].size(); j++)
+        {
+            double speedup = allBenchmarkData[i][0].time / allBenchmarkData[i][j].time;
+
+            // Print in the format "1.5x"
+            std::ostringstream stream;
+            stream << std::fixed << std::setprecision(1) << speedup << "x";
+            std::string speedupStr = stream.str();
+            std::cout << std::left << std::setw(numWidth) << speedupStr;
+        }
+
+        cout << endl;
+    }
+
+    cout << endl;
+    cout << endl;
+}
+
+/**
+ * Write the benchmark data to CSV files
+ */
+void writeCSVFiles(vector<vector<Benchmark>> &allBenchmarkData)
+{
+    string timeCSV = "time.csv";
+    string resultCSV = "result.csv";
+    string speedupCSV = "speedup.csv";
+
+    ofstream timeFile(timeCSV);
+    ofstream resultFile(resultCSV);
+    ofstream speedupFile(speedupCSV);
+
+    timeFile << "Function,";
+    resultFile << "Function,";
+    speedupFile << "Function,";
+
+    for (int threads = minimumThreads; threads <= numberOfThreads; threads *= 2)
+    {
+        timeFile << to_string(threads) + (threads == 1 ? " Thread" : " Threads") + ",";
+        resultFile << to_string(threads) + (threads == 1 ? " Thread" : " Threads") + ",";
+        speedupFile << to_string(threads) + (threads == 1 ? " Thread" : " Threads") + ",";
+    }
+
+    if (isNotPowerOfTwoThreads)
+    {
+        timeFile << to_string(numberOfThreads) + " Threads,";
+        resultFile << to_string(numberOfThreads) + " Threads,";
+        speedupFile << to_string(numberOfThreads) + " Threads,";
+    }
+
+    timeFile << endl;
+    resultFile << endl;
+    speedupFile << endl;
+
+    for (int i = 0; i < allBenchmarkData.size(); i++)
+    {
+        timeFile << functionBenchmarks[i].name + ",";
+        resultFile << functionBenchmarks[i].name + ",";
+        speedupFile << functionBenchmarks[i].name + ",";
+
+        for (int j = 0; j < allBenchmarkData[i].size(); j++)
+        {
+            timeFile << allBenchmarkData[i][j].time.count() << ",";
+            resultFile << allBenchmarkData[i][j].averageResult << ",";
+
+            double speedup = allBenchmarkData[i][0].time / allBenchmarkData[i][j].time;
+            speedupFile << speedup << ",";
+        }
+
+        timeFile << endl;
+        resultFile << endl;
+        speedupFile << endl;
+    }
+
+    timeFile.close();
+    resultFile.close();
+    speedupFile.close();
+}
+
+/**
+ * Main function
+ */
+int main()
+{
+    printTableTitle("Speed Table", 2 , 1);
+    printTableHeader();
     printElement("Best", numWidth);
     cout << endl;
     cout << endl;
+
+    vector<vector<Benchmark>> allBenchmarkData;
 
     // Run the Firefly Algorithm for each function
     for (const auto &funcBenchmark : functionBenchmarks)
@@ -237,7 +389,7 @@ int main()
         for (int threads = minimumThreads; threads <= numberOfThreads; threads *= 2)
         {
             Benchmark bench = executeBenchmark(funcBenchmark, threads);
-            printElement(bench.time, numWidth);
+            printElementPrecise(bench.time, numWidth);
             benchmarkData.push_back(bench);
         }
 
@@ -245,9 +397,11 @@ int main()
         if (isNotPowerOfTwoThreads)
         {
             Benchmark bench = executeBenchmark(funcBenchmark, numberOfThreads);
-            printElement(bench.time, numWidth);
+            printElementPrecise(bench.time, numWidth);
             benchmarkData.push_back(bench);
         }
+
+        allBenchmarkData.push_back(benchmarkData);
 
         // Find the best time
         auto min_element_it = min_element(benchmarkData.begin(), benchmarkData.end(), [](const Benchmark &a, const Benchmark &b) {
@@ -263,6 +417,13 @@ int main()
 
     cout << endl;
     cout << endl;
+
+    // Print the rest of the tables
+    printSpeedupTable(allBenchmarkData);
+    printResultsTable(allBenchmarkData);
+    printBestResultsTable(allBenchmarkData);
+
+    writeCSVFiles(allBenchmarkData);
 
     return 0;
 }
