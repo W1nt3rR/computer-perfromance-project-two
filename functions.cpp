@@ -172,9 +172,9 @@ double schwefel2_4(const vector<double>& x) {
 double schwefel(const vector<double>& x) {
     double sum = 0.0;
     for (double xi : x) {
-        sum += xi * sin(sqrt(fabs(xi)));
+        sum += -xi * sin(sqrt(fabs(xi)));
     }
-    return 418.9829 * x.size() - sum;
+    return sum;
 }
 
 double schaffer(const vector<double>& x) {
