@@ -4,7 +4,7 @@
         {
             "label": "build",
             "type": "shell",
-            "command": "g++ -O3 -std=c++23 -fopenmp -march=native -mtune=native -funroll-loops -o firefly firefly.cpp",
+            "command": "g++ -O3 -std=c++23 -fopenmp -march=native -mtune=native -funroll-loops -flto -ffast-math -fstrict-aliasing -fpredictive-commoning -ftree-vectorize -fprefetch-loop-arrays -floop-block -floop-interchange -floop-strip-mine -o firefly firefly.cpp",
             "group": {
             "kind": "build",
             "isDefault": true
