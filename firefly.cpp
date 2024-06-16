@@ -369,6 +369,9 @@ void writeCSVFiles(vector<vector<Benchmark>> &allBenchmarkData)
  */
 int main()
 {
+    // Measure the total execution time
+    auto start = chrono::high_resolution_clock::now();
+
     printTableTitle("Speed Table", 2 , 1);
     printTableHeader();
     printElement("Best", numWidth);
@@ -424,6 +427,16 @@ int main()
     printBestResultsTable(allBenchmarkData);
 
     writeCSVFiles(allBenchmarkData);
+
+    // Calculate the total execution time
+    auto end = chrono::high_resolution_clock::now();
+    chrono::duration<double> elapsed = end - start;
+
+    // Print the total execution time
+    cout << "Total execution time: " << elapsed;
+
+    cout << endl;
+    cout << endl;
 
     return 0;
 }
