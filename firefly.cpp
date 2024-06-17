@@ -19,15 +19,15 @@ using namespace std;
 /**
  * Firefly Algorithm parameters
  */
-const int population_size = 50;
-const int max_generations = 4000;
+const int populationSize = 50;
+const int maxGenerations = 4000;
 
-const double beta0 = 1.0;      // Attractiveness constant
-const double gammaCoeff = 0.5; // Absorption coefficient
+const double attractivenessConstant = 1.0;
+const double absorptionCoefficient = 0.5;
 
-const double minAlpha = 0.05;
-const double maxAlpha = 0.2;
-const double alphaIncrement = (maxAlpha - minAlpha) / max_generations;
+const double randomnessStart = 0.05;
+const double randomnessEnd = 0.2;
+const double randomnessDelta = (randomnessEnd - randomnessStart) / maxGenerations;
 
 /**
  * Other Parameters
@@ -71,6 +71,8 @@ const vector<FunctionBenchmark> functionBenchmarks = {
     {30, -5.12, 5.12, "sphere", sphere},
     {30, -10, 10, "schwefel2_22", schwefel2_22}};
 
+const int functionCount = functionBenchmarks.size();
+
 /**
  * Firefly Algorithm
  */
@@ -79,12 +81,12 @@ double fireflyAlgorithm(int dim, double min_range, double max_range, function<do
     omp_set_num_threads(numThreads);
 
     // Initialize vectors
-    vector<vector<double>> population(population_size, vector<double>(dim));
-    vector<double> fitness(population_size);
+    vector<vector<double>> population(populationSize, vector<double>(dim));
+    vector<double> fitness(populationSize);
 
     // Initialize population and fitness
 #pragma omp parallel for schedule(dynamic)
-    for (int i = 0; i < population_size; ++i)
+    for (int i = 0; i < populationSize; ++i)
     {
         // Random number generator
         mt19937 rng(random_device{}() + omp_get_thread_num());
@@ -101,20 +103,20 @@ double fireflyAlgorithm(int dim, double min_range, double max_range, function<do
         fitness[i] = benchmark(population[i]);
     }
 
-    double alpha = minAlpha;
+    double randomness = randomnessStart;
 
-    for (int gen = 0; gen < max_generations; ++gen)
+    for (int gen = 0; gen < maxGenerations; ++gen)
     {
-        // Update alpha
-        alpha += alphaIncrement;
+        // Update the randomness value
+        randomness += randomnessDelta;
 
 #pragma omp parallel for schedule(dynamic)
-        for (int i = 0; i < population_size; ++i)
+        for (int i = 0; i < populationSize; ++i)
         {
             mt19937 rng(random_device{}() + omp_get_thread_num());
             uniform_real_distribution<> dist(0.0, 1.0);
 
-            for (int j = 0; j < population_size; ++j)
+            for (int j = 0; j < populationSize; ++j)
             {
                 if (fitness[i] > fitness[j])
                 {
@@ -128,20 +130,19 @@ double fireflyAlgorithm(int dim, double min_range, double max_range, function<do
                         else
                             unionSize++;
                     }
+
                     // Calculate the distance between two vectors using cosine similarity
                     double r = 1.0 - (double)intersect / unionSize;
 
-                    // alpha - randomness
-                    // beta - attractivness
                     // This line calculates the attractiveness of firefly j to firefly i based on their distance r
-                    double beta = beta0 * exp(-gammaCoeff * r * r);
+                    double attractiveness = attractivenessConstant * exp(-absorptionCoefficient * r * r);
 
                     for (int k = 0; k < dim; ++k)
                     {
                         // Multiplying attractivness with the direction from firefly i to firefly j
                         // population[j][k] - population[i][k] (distance between the two, if negative firefly i is to the right else j is)
                         // Then we add the randomness to prevent local optima
-                        population[i][k] += beta * (population[j][k] - population[i][k]) + alpha * (randomDouble(0, 1, rng, dist) - 0.5);
+                        population[i][k] += attractiveness * (population[j][k] - population[i][k]) + randomness * (randomDouble(0, 1, rng, dist) - 0.5);
                         // Ensures that the new position of firefly i in dimension k remains within the specified bounds
                         population[i][k] = min(max(population[i][k], min_range), max_range);
                     }
