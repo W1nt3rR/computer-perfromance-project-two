@@ -83,7 +83,7 @@ double fireflyAlgorithm(int dim, double min_range, double max_range, function<do
     vector<double> fitness(population_size);
 
     // Initialize population and fitness
-    #pragma omp parallel for schedule(dynamic)
+#pragma omp parallel for schedule(dynamic)
     for (int i = 0; i < population_size; ++i)
     {
         // Random number generator
@@ -108,7 +108,7 @@ double fireflyAlgorithm(int dim, double min_range, double max_range, function<do
         // Update alpha
         alpha += alphaIncrement;
 
-        #pragma omp parallel for schedule(dynamic)
+#pragma omp parallel for schedule(dynamic)
         for (int i = 0; i < population_size; ++i)
         {
             mt19937 rng(random_device{}() + omp_get_thread_num());
@@ -120,33 +120,32 @@ double fireflyAlgorithm(int dim, double min_range, double max_range, function<do
                 {
                     int intersect = 0;
                     int unionSize = dim;
+
                     for (int k = 0; k < dim; ++k)
                     {
                         if (population[i][k] == population[j][k])
-                        {
                             intersect++;
-                        }
                         else
-                        {
                             unionSize++;
-                        }
                     }
                     // Calculate the distance between two vectors using cosine similarity
                     double r = 1.0 - (double)intersect / unionSize;
 
                     // alpha - randomness
-                    // beta - attractivness     
-                    // This line calculates the attractiveness of firefly j to firefly i based on their distance r    
+                    // beta - attractivness
+                    // This line calculates the attractiveness of firefly j to firefly i based on their distance r
                     double beta = beta0 * exp(-gammaCoeff * r * r);
+
                     for (int k = 0; k < dim; ++k)
                     {
-                        // Multiplying attractivness with the direction from firefly i to firefly j 
-                        // population[j][k] - population[i][k] (distance between the two, if negative firefly i is to the right else j is) 
+                        // Multiplying attractivness with the direction from firefly i to firefly j
+                        // population[j][k] - population[i][k] (distance between the two, if negative firefly i is to the right else j is)
                         // Then we add the randomness to prevent local optima
                         population[i][k] += beta * (population[j][k] - population[i][k]) + alpha * (randomDouble(0, 1, rng, dist) - 0.5);
                         // Ensures that the new position of firefly i in dimension k remains within the specified bounds
                         population[i][k] = min(max(population[i][k], min_range), max_range);
                     }
+
                     // Reevalute fitness for firefly i
                     fitness[i] = benchmark(population[i]);
                 }
@@ -154,7 +153,7 @@ double fireflyAlgorithm(int dim, double min_range, double max_range, function<do
         }
     }
 
-    // Identifying the index of the superior firefly 
+    // Identifying the index of the superior firefly
     auto min_element_it = min_element(fitness.begin(), fitness.end());
     int best_index = distance(fitness.begin(), min_element_it);
 
@@ -198,18 +197,15 @@ Benchmark executeBenchmark(const FunctionBenchmark &functionBenchmark, int threa
 /**
  * Print the table header
  */
-void printTableHeader() {
+void printTableHeader()
+{
     printElement("Function", nameWidth);
-    for (int threads = minimumThreads; threads <= numberOfThreads; threads *= 2)
-    {
-        printElement(to_string(threads) + (threads == 1 ? " Thread" : " Threads"), numWidth);
-    }
 
-    // If the max threads is not a power of two, add it to the table
+    for (int threads = minimumThreads; threads <= numberOfThreads; threads *= 2)
+        printElement(to_string(threads) + (threads == 1 ? " Thread" : " Threads"), numWidth);
+
     if (isNotPowerOfTwoThreads)
-    {
         printElement(to_string(numberOfThreads) + " Threads", numWidth);
-    }
 }
 
 /**
@@ -381,7 +377,7 @@ int main()
     // Measure the total execution time
     auto start = chrono::high_resolution_clock::now();
 
-    printTableTitle("Speed Table", 2 , 1);
+    printTableTitle("Speed Table", 2, 1);
     printTableHeader();
     printElement("Best", numWidth);
     cout << endl;
