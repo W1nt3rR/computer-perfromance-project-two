@@ -21,9 +21,13 @@ using namespace std;
  */
 const int population_size = 50;
 const int max_generations = 4000;
-const double alpha = 0.05;     // Randomness strength
+
 const double beta0 = 1.0;      // Attractiveness constant
 const double gammaCoeff = 0.5; // Absorption coefficient
+
+const double minAlpha = 0.05;
+const double maxAlpha = 0.2;
+const double alphaIncrement = (maxAlpha - minAlpha) / max_generations;
 
 /**
  * Other Parameters
@@ -97,8 +101,13 @@ double fireflyAlgorithm(int dim, double min_range, double max_range, function<do
         fitness[i] = benchmark(population[i]);
     }
 
+    double alpha = minAlpha;
+
     for (int gen = 0; gen < max_generations; ++gen)
     {
+        // Update alpha
+        alpha += alphaIncrement;
+
         #pragma omp parallel for schedule(dynamic)
         for (int i = 0; i < population_size; ++i)
         {
