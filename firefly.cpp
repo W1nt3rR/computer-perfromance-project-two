@@ -164,35 +164,29 @@ double fireflyAlgorithm(int dim, double min_range, double max_range, function<do
 /**
  * Execute the benchmark for a specific function and number of threads
  */
-Benchmark executeBenchmark(const FunctionBenchmark &functionBenchmark, int threads)
+Benchmark executeBenchmark(const FunctionBenchmark &func, int threads)
 {
-    string function_name = functionBenchmark.name;
-    auto benchmark = functionBenchmark.benchmark;
-    int dim = functionBenchmark.dim;
-    double min_range = functionBenchmark.min_range;
-    double max_range = functionBenchmark.max_range;
+    vector<double> results(numberOfRuns);
 
     auto start = chrono::high_resolution_clock::now();
 
-    vector<double> results(numberOfRuns);
-
-    for (int j = 0; j < numberOfRuns; ++j)
-    {
-        results.push_back(fireflyAlgorithm(dim, min_range, max_range, benchmark, threads));
-    }
+    // Run the Firefly Algorithm multiple times
+    for (int run = 0; run < numberOfRuns; ++run)
+        results[run] = fireflyAlgorithm(func.dim, func.min_range, func.max_range, func.benchmark, threads);
 
     auto end = chrono::high_resolution_clock::now();
 
     chrono::duration<double> elapsed = end - start;
 
-    Benchmark b;
-    b.threadCount = threads;
-    b.functionName = function_name;
-    b.time = elapsed / numberOfRuns;
-    b.averageResult = calculateAverage(results);
-    b.bestResult = *min_element(results.begin(), results.end());
+    Benchmark bench{
+        .threadCount = threads,
+        .functionName = func.name,
+        .time = elapsed / numberOfRuns,
+        .averageResult = calculateAverage(results),
+        .bestResult = *min_element(results.begin(), results.end()),
+    };
 
-    return b;
+    return bench;
 }
 
 /**
